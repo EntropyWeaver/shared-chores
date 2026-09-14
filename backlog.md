@@ -14,16 +14,18 @@ Estado: listo para implementación incremental
 
 ## Task 1 — Crear una página inicial con un test funcional
 
+**Status:** completada.
+
 **Goal:** demostrar que Django, la aplicación `chores`, el enrutamiento, una vista y una plantilla funcionan juntos de extremo a extremo.
 
 **Description:** crear una página mínima de Shared Chores en `/` y cubrirla con un test. Este será el primer comportamiento observable de la aplicación y sustituirá el estado actual de cero tests por una línea base verificable.
 
 **Acceptance criteria:**
 
-- [ ] Una petición `GET /` devuelve HTTP 200.
-- [ ] La respuesta contiene el nombre `Shared Chores`.
-- [ ] La vista pertenece a la aplicación `chores` y utiliza una plantilla HTML.
-- [ ] `uv run python manage.py test` descubre al menos un test y la suite completa pasa.
+- [x] Una petición `GET /` devuelve HTTP 200.
+- [x] La respuesta contiene el nombre `Shared Chores`.
+- [x] La vista pertenece a la aplicación `chores` y utiliza una plantilla HTML.
+- [x] `uv run python manage.py test` descubre al menos un test y la suite completa pasa.
 
 **Out of scope:** autenticación, modelos de dominio, formularios y diseño visual definitivo.
 

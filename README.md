@@ -6,7 +6,7 @@ Este repositorio forma parte del Module 1 de **AI Dev Tools Zoomcamp 2026**. El 
 
 ## Estado
 
-Especificación del MVP aprobada y backlog definido. La implementación funcional todavía no ha comenzado.
+Especificación y backlog aprobados. La Task 1 está completada: la aplicación dispone de una página inicial y de su primer test funcional.
 
 ## Funcionalidades previstas
 
@@ -29,4 +29,4 @@ Especificación del MVP aprobada y backlog definido. La implementación funciona
 
 ## Próximo paso
 
-Implementar la Task 1 del backlog: una página inicial mínima con un test funcional.
+Implementar la Task 2 del backlog: registro y autenticación de usuarios.
