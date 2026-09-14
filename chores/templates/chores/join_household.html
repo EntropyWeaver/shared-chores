@@ -1,0 +1,13 @@
+{% extends "chores/base.html" %}
+
+{% block title %}Unirse a un hogar | Shared Chores{% endblock %}
+
+{% block content %}
+    <h1>Unirse a un hogar</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Unirme</button>
+    </form>
+    <p><a href="{% url 'chores:dashboard' %}">Volver a mi panel</a></p>
+{% endblock %}

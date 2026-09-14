@@ -4,5 +4,22 @@
 
 {% block content %}
     <h1>Mi panel</h1>
-    <p>Bienvenido, {{ user.username }}. Aquí aparecerán tus tareas.</p>
+    {% if household %}
+        <h2>{{ household.name }}</h2>
+        <p>Código para compartir: <strong>{{ household.access_code }}</strong></p>
+        <p>Miembros: {{ household.member_count }}/6</p>
+        <ul>
+            {% for membership in household_members %}
+                <li>{{ membership.user.username }}</li>
+            {% endfor %}
+        </ul>
+        <p>Aquí aparecerán tus tareas.</p>
+    {% else %}
+        <p>Todavía no perteneces a ningún hogar.</p>
+        <p>
+            <a href="{% url 'chores:create-household' %}">Crear un hogar</a>
+            o
+            <a href="{% url 'chores:join-household' %}">unirme con un código</a>.
+        </p>
+    {% endif %}
 {% endblock %}

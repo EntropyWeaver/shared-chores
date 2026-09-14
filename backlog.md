@@ -75,11 +75,11 @@ Estado: listo para implementación incremental
 
 **Acceptance criteria:**
 
-- [ ] Un usuario sin hogar puede crear uno y se convierte en su primer miembro.
-- [ ] El hogar creado muestra un código que puede compartirse.
-- [ ] Un usuario sin hogar puede unirse mediante un código válido.
-- [ ] Un código inexistente o un hogar completo producen un error visible y no alteran datos.
-- [ ] Un usuario que ya pertenece a un hogar no puede crear otro ni unirse a otro.
+- [x] Un usuario sin hogar puede crear uno y se convierte en su primer miembro.
+- [x] El hogar creado muestra un código que puede compartirse.
+- [x] Un usuario sin hogar puede unirse mediante un código válido.
+- [x] Un código inexistente o un hogar completo producen un error visible y no alteran datos.
+- [x] Un usuario que ya pertenece a un hogar no puede crear otro ni unirse a otro.
 
 **Out of scope:** invitaciones por correo, enlaces temporales y regeneración del código.
 

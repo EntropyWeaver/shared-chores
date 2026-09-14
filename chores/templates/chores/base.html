@@ -24,6 +24,13 @@
     </header>
 
     <main>
+        {% if messages %}
+            <ul aria-label="Mensajes">
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
         {% block content %}{% endblock %}
     </main>
 </body>

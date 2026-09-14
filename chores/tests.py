@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
@@ -141,3 +143,135 @@ class HouseholdModelTests(TestCase):
         self.assertEqual(household.member_count, 6)
         self.assertTrue(household.is_full)
         self.assertFalse(Membership.objects.filter(user=users[6]).exists())
+
+
+class HouseholdFlowTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='borja')
+        self.client.force_login(self.user)
+
+    def test_household_routes_require_authentication(self):
+        self.client.logout()
+
+        for route_name in ('create-household', 'join-household'):
+            with self.subTest(route_name=route_name):
+                route = reverse(f'chores:{route_name}')
+                response = self.client.get(route)
+
+                self.assertRedirects(
+                    response,
+                    f"{reverse('chores:login')}?next={route}",
+                )
+
+    @patch('chores.services.generate_access_code', return_value='ROOM2026')
+    def test_user_can_create_household_and_becomes_first_member(self, _code):
+        response = self.client.post(
+            reverse('chores:create-household'),
+            {'name': 'Piso de Salamanca'},
+            follow=True,
+        )
+
+        household = Household.objects.get()
+        self.assertRedirects(response, reverse('chores:dashboard'))
+        self.assertEqual(household.name, 'Piso de Salamanca')
+        self.assertEqual(household.access_code, 'ROOM2026')
+        self.assertEqual(self.user.membership.household, household)
+        self.assertEqual(household.member_count, 1)
+        self.assertContains(response, 'ROOM2026')
+
+    def test_user_can_join_household_with_normalized_valid_code(self):
+        household = Household.objects.create(
+            name='Piso compartido',
+            access_code='JOIN2026',
+        )
+
+        response = self.client.post(
+            reverse('chores:join-household'),
+            {'access_code': '  join2026  '},
+            follow=True,
+        )
+
+        self.assertRedirects(response, reverse('chores:dashboard'))
+        self.assertEqual(self.user.membership.household, household)
+        self.assertEqual(household.member_count, 1)
+        self.assertContains(response, 'Piso compartido')
+        self.assertContains(response, 'JOIN2026')
+
+    def test_unknown_code_shows_error_without_changing_data(self):
+        response = self.client.post(
+            reverse('chores:join-household'),
+            {'access_code': 'UNKNOWN'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'No existe ningún hogar con ese código.')
+        self.assertFalse(Membership.objects.filter(user=self.user).exists())
+        self.assertEqual(Household.objects.count(), 0)
+
+    def test_full_household_shows_error_without_adding_user(self):
+        household = Household.objects.create(
+            name='Piso completo',
+            access_code='FULL2026',
+        )
+        for number in range(6):
+            household.add_member(
+                User.objects.create_user(username=f'member-{number}')
+            )
+
+        response = self.client.post(
+            reverse('chores:join-household'),
+            {'access_code': 'FULL2026'},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'Ese hogar ya tiene 6 miembros.')
+        self.assertEqual(household.member_count, 6)
+        self.assertFalse(Membership.objects.filter(user=self.user).exists())
+
+    def test_existing_member_cannot_create_or_join_another_household(self):
+        current_household = Household.objects.create(
+            name='Mi piso',
+            access_code='CURRENT1',
+        )
+        target_household = Household.objects.create(
+            name='Otro piso',
+            access_code='TARGET01',
+        )
+        current_household.add_member(self.user)
+
+        create_response = self.client.post(
+            reverse('chores:create-household'),
+            {'name': 'Tercer piso'},
+            follow=True,
+        )
+        join_response = self.client.post(
+            reverse('chores:join-household'),
+            {'access_code': target_household.access_code},
+            follow=True,
+        )
+
+        self.assertContains(create_response, 'Ya perteneces a un hogar.')
+        self.assertContains(join_response, 'Ya perteneces a un hogar.')
+        self.assertEqual(Household.objects.count(), 2)
+        self.assertEqual(Membership.objects.filter(user=self.user).count(), 1)
+        self.assertEqual(self.user.membership.household, current_household)
+
+    @patch(
+        'chores.services.generate_access_code',
+        side_effect=('TAKEN123', 'FRESH123'),
+    )
+    def test_code_generation_retries_after_a_collision(self, _code):
+        Household.objects.create(name='Existente', access_code='TAKEN123')
+
+        response = self.client.post(
+            reverse('chores:create-household'),
+            {'name': 'Nuevo piso'},
+        )
+
+        self.assertRedirects(response, reverse('chores:dashboard'))
+        self.assertTrue(
+            Household.objects.filter(
+                name='Nuevo piso',
+                access_code='FRESH123',
+            ).exists()
+        )
