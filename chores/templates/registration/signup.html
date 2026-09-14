@@ -1,0 +1,13 @@
+{% extends "chores/base.html" %}
+
+{% block title %}Crear cuenta | Shared Chores{% endblock %}
+
+{% block content %}
+    <h1>Crear cuenta</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Registrarme</button>
+    </form>
+    <p>¿Ya tienes cuenta? <a href="{% url 'chores:login' %}">Inicia sesión</a>.</p>
+{% endblock %}

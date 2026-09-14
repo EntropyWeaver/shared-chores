@@ -39,11 +39,11 @@ Estado: listo para implementación incremental
 
 **Acceptance criteria:**
 
-- [ ] Un visitante puede crear una cuenta con nombre de usuario y contraseña válidos.
-- [ ] No se permiten nombres de usuario duplicados.
-- [ ] Un usuario registrado puede iniciar y cerrar sesión.
-- [ ] Las rutas privadas redirigen a inicio de sesión cuando el visitante es anónimo.
-- [ ] Los flujos principales de autenticación están cubiertos por tests.
+- [x] Un visitante puede crear una cuenta con nombre de usuario y contraseña válidos.
+- [x] No se permiten nombres de usuario duplicados.
+- [x] Un usuario registrado puede iniciar y cerrar sesión.
+- [x] Las rutas privadas redirigen a inicio de sesión cuando el visitante es anónimo.
+- [x] Los flujos principales de autenticación están cubiertos por tests.
 
 **Out of scope:** correo electrónico obligatorio, recuperación de contraseña, OAuth y autenticación multifactor.
 

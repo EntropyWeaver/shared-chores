@@ -6,7 +6,7 @@ Este repositorio forma parte del Module 1 de **AI Dev Tools Zoomcamp 2026**. El 
 
 ## Estado
 
-Especificación y backlog aprobados. La Task 1 está completada: la aplicación dispone de una página inicial y de su primer test funcional.
+Especificación y backlog aprobados. Las Tasks 1 y 2 están completadas: la aplicación dispone de una página inicial, registro, inicio y cierre de sesión, y un panel privado mínimo.
 
 ## Funcionalidades previstas
 
@@ -29,4 +29,4 @@ Especificación y backlog aprobados. La Task 1 está completada: la aplicación 
 
 ## Próximo paso
 
-Implementar la Task 2 del backlog: registro y autenticación de usuarios.
+Implementar la Task 3 del backlog: modelar hogares y pertenencia.

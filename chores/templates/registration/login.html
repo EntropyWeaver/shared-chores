@@ -1,0 +1,16 @@
+{% extends "chores/base.html" %}
+
+{% block title %}Iniciar sesión | Shared Chores{% endblock %}
+
+{% block content %}
+    <h1>Iniciar sesión</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        {% if next %}
+            <input type="hidden" name="next" value="{{ next }}">
+        {% endif %}
+        <button type="submit">Entrar</button>
+    </form>
+    <p>¿Todavía no tienes cuenta? <a href="{% url 'chores:signup' %}">Créala aquí</a>.</p>
+{% endblock %}

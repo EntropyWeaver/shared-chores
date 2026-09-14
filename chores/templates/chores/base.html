@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Shared Chores{% endblock %}</title>
+</head>
+<body>
+    <header>
+        <a href="{% url 'chores:home' %}">Shared Chores</a>
+        <nav aria-label="Navegación principal">
+            {% if user.is_authenticated %}
+                <span>Hola, {{ user.username }}</span>
+                <a href="{% url 'chores:dashboard' %}">Mi panel</a>
+                <form method="post" action="{% url 'chores:logout' %}">
+                    {% csrf_token %}
+                    <button type="submit">Cerrar sesión</button>
+                </form>
+            {% else %}
+                <a href="{% url 'chores:login' %}">Iniciar sesión</a>
+                <a href="{% url 'chores:signup' %}">Crear cuenta</a>
+            {% endif %}
+        </nav>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

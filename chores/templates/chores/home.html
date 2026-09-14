@@ -1,14 +1,8 @@
-<!doctype html>
-<html lang="es">
-<head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Shared Chores</title>
-</head>
-<body>
-    <main>
-        <h1>Shared Chores</h1>
-        <p>Organiza las tareas domésticas de tu piso compartido.</p>
-    </main>
-</body>
-</html>
+{% extends "chores/base.html" %}
+
+{% block title %}Shared Chores{% endblock %}
+
+{% block content %}
+    <h1>Shared Chores</h1>
+    <p>Organiza las tareas domésticas de tu piso compartido.</p>
+{% endblock %}
