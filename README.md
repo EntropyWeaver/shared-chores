@@ -6,7 +6,7 @@ Este repositorio forma parte del Module 1 de **AI Dev Tools Zoomcamp 2026**. El 
 
 ## Estado
 
-Especificación y backlog aprobados. Las Tasks 1 y 2 están completadas: la aplicación dispone de una página inicial, registro, inicio y cierre de sesión, y un panel privado mínimo.
+Especificación y backlog aprobados. Las Tasks 1–3 están completadas: la aplicación dispone de autenticación y de modelos probados para hogares con códigos únicos y un máximo de seis miembros.
 
 ## Funcionalidades previstas
 
@@ -29,4 +29,4 @@ Especificación y backlog aprobados. Las Tasks 1 y 2 están completadas: la apli
 
 ## Próximo paso
 
-Implementar la Task 3 del backlog: modelar hogares y pertenencia.
+Implementar la Task 4 del backlog: crear un hogar o unirse mediante código.

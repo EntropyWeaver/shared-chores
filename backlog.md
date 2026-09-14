@@ -57,11 +57,11 @@ Estado: listo para implementación incremental
 
 **Acceptance criteria:**
 
-- [ ] Un hogar tiene nombre y un código de acceso único.
-- [ ] Un usuario puede pertenecer como máximo a un hogar.
-- [ ] Un hogar admite como máximo 6 miembros.
-- [ ] Las restricciones de pertenencia y capacidad están cubiertas por tests.
-- [ ] Se crea y aplica una migración válida.
+- [x] Un hogar tiene nombre y un código de acceso único.
+- [x] Un usuario puede pertenecer como máximo a un hogar.
+- [x] Un hogar admite como máximo 6 miembros.
+- [x] Las restricciones de pertenencia y capacidad están cubiertas por tests.
+- [x] Se crea y aplica una migración válida.
 
 **Out of scope:** roles administrativos, varios hogares por usuario y expulsión de miembros.
 

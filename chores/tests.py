@@ -1,6 +1,10 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
+
+from chores.models import Household, Membership
 
 
 User = get_user_model()
@@ -82,3 +86,58 @@ class AuthenticationFlowTests(TestCase):
 
         self.assertEqual(response.status_code, 405)
         self.assertIn('_auth_user_id', self.client.session)
+
+
+class HouseholdModelTests(TestCase):
+    def test_household_has_name_and_unique_access_code(self):
+        household = Household.objects.create(
+            name='Piso de Salamanca',
+            access_code='SALAMANCA1',
+        )
+
+        self.assertEqual(str(household), 'Piso de Salamanca')
+        self.assertEqual(household.access_code, 'SALAMANCA1')
+
+        with self.assertRaises(IntegrityError), transaction.atomic():
+            Household.objects.create(
+                name='Otro piso',
+                access_code='SALAMANCA1',
+            )
+
+    def test_user_can_belong_to_only_one_household(self):
+        user = User.objects.create_user(username='borja')
+        first_household = Household.objects.create(
+            name='Primer piso',
+            access_code='FIRST',
+        )
+        second_household = Household.objects.create(
+            name='Segundo piso',
+            access_code='SECOND',
+        )
+        first_household.add_member(user)
+
+        with self.assertRaises(ValidationError):
+            second_household.add_member(user)
+
+        self.assertEqual(Membership.objects.filter(user=user).count(), 1)
+        self.assertEqual(user.membership.household, first_household)
+
+    def test_household_accepts_at_most_six_members(self):
+        household = Household.objects.create(
+            name='Piso completo',
+            access_code='FULLHOUSE',
+        )
+        users = [
+            User.objects.create_user(username=f'roommate-{number}')
+            for number in range(1, 8)
+        ]
+
+        for user in users[:6]:
+            household.add_member(user)
+
+        with self.assertRaises(ValidationError):
+            household.add_member(users[6])
+
+        self.assertEqual(household.member_count, 6)
+        self.assertTrue(household.is_full)
+        self.assertFalse(Membership.objects.filter(user=users[6]).exists())
