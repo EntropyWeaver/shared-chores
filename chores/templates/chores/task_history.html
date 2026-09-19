@@ -1,0 +1,22 @@
+{% extends "chores/base.html" %}
+
+{% block title %}Mi historial | Shared Chores{% endblock %}
+
+{% block content %}
+    <h1>Mi historial</h1>
+    {% if completed_tasks %}
+        <ul>
+            {% for task in completed_tasks %}
+                <li>
+                    <strong>{{ task.title }}</strong>
+                    — completada el {{ task.completed_at|date:"d/m/Y H:i" }}
+                    — {{ task.get_recurrence_display }}
+                    {% if task.description %}<p>{{ task.description }}</p>{% endif %}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Todavía no has completado ninguna tarea.</p>
+    {% endif %}
+    <p><a href="{% url 'chores:dashboard' %}">Volver a mi panel</a></p>
+{% endblock %}

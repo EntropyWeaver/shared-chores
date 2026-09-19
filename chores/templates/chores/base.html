@@ -12,6 +12,7 @@
             {% if user.is_authenticated %}
                 <span>Hola, {{ user.username }}</span>
                 <a href="{% url 'chores:dashboard' %}">Mi panel</a>
+                <a href="{% url 'chores:task-history' %}">Mi historial</a>
                 <form method="post" action="{% url 'chores:logout' %}">
                     {% csrf_token %}
                     <button type="submit">Cerrar sesión</button>

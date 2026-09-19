@@ -85,6 +85,34 @@ def dashboard(request):
 
 
 @login_required
+def task_history(request):
+    """Show the authenticated user's completed tasks in their household."""
+    membership = (
+        Membership.objects.select_related('household')
+        .filter(user=request.user)
+        .first()
+    )
+    completed_tasks = []
+
+    if membership:
+        completed_tasks = (
+            Task.objects.filter(
+                household=membership.household,
+                assignee=request.user,
+                status=Task.Status.COMPLETED,
+            )
+            .select_related('completed_by')
+            .order_by('-completed_at', '-id')
+        )
+
+    return render(
+        request,
+        'chores/task_history.html',
+        {'completed_tasks': completed_tasks},
+    )
+
+
+@login_required
 def create_household(request):
     """Create a household for a user who does not have one yet."""
     if Membership.objects.filter(user=request.user).exists():

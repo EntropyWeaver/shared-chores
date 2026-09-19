@@ -15,6 +15,7 @@ urlpatterns = [
     ),
     path('accounts/logout/', auth_views.LogoutView.as_view(), name='logout'),
     path('dashboard/', views.dashboard, name='dashboard'),
+    path('tasks/history/', views.task_history, name='task-history'),
     path('households/create/', views.create_household, name='create-household'),
     path('households/join/', views.join_household, name='join-household'),
     path('tasks/create/', views.create_task, name='create-task'),

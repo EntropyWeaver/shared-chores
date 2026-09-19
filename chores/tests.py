@@ -805,3 +805,138 @@ class WeeklyTaskRecurrenceTests(TestCase):
         self.assertEqual(Task.objects.count(), 2)
         self.assertEqual(Task.objects.filter(generated_from=task).count(), 1)
         self.assertContains(response, 'Esta tarea ya estaba completada.')
+
+
+class TaskHistoryTests(TestCase):
+    def setUp(self):
+        self.household = Household.objects.create(
+            name='Piso principal',
+            access_code='HISTORY1',
+        )
+        self.user = User.objects.create_user(username='borja')
+        self.housemate = User.objects.create_user(username='alex')
+        self.household.add_member(self.user)
+        self.household.add_member(self.housemate)
+
+        self.other_household = Household.objects.create(
+            name='Piso ajeno',
+            access_code='HISTORY2',
+        )
+        self.outsider = User.objects.create_user(username='outsider')
+        self.other_household.add_member(self.outsider)
+
+        self.history_url = reverse('chores:task-history')
+        self.client.force_login(self.user)
+
+    def create_completed_task(
+        self,
+        *,
+        title,
+        assignee=None,
+        completed_at=None,
+    ):
+        actual_assignee = assignee or self.user
+        return Task.objects.create(
+            household=self.household,
+            creator=self.housemate,
+            assignee=actual_assignee,
+            title=title,
+            due_date=date(2026, 9, 18),
+            status=Task.Status.COMPLETED,
+            completed_by=actual_assignee,
+            completed_at=completed_at or timezone.now(),
+        )
+
+    def test_history_shows_own_completed_tasks_newest_first(self):
+        older = self.create_completed_task(
+            title='Bajar el cartón',
+            completed_at=datetime(
+                2026,
+                9,
+                18,
+                10,
+                0,
+                tzinfo=datetime_timezone.utc,
+            ),
+        )
+        newest = self.create_completed_task(
+            title='Limpiar la cocina',
+            completed_at=datetime(
+                2026,
+                9,
+                19,
+                12,
+                30,
+                tzinfo=datetime_timezone.utc,
+            ),
+        )
+        Task.objects.create(
+            household=self.household,
+            creator=self.housemate,
+            assignee=self.user,
+            title='Todavía pendiente',
+            due_date=date(2026, 9, 20),
+        )
+
+        response = self.client.get(self.history_url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTemplateUsed(response, 'chores/task_history.html')
+        self.assertEqual(list(response.context['completed_tasks']), [newest, older])
+        self.assertContains(response, 'Limpiar la cocina')
+        self.assertContains(response, '19/09/2026 12:30')
+        self.assertContains(response, 'Bajar el cartón')
+        self.assertNotContains(response, 'Todavía pendiente')
+        content = response.content.decode()
+        self.assertLess(
+            content.index('Limpiar la cocina'),
+            content.index('Bajar el cartón'),
+        )
+
+    def test_history_hides_completed_tasks_assigned_to_housemate(self):
+        self.create_completed_task(
+            title='Tarea privada del compañero',
+            assignee=self.housemate,
+        )
+
+        response = self.client.get(self.history_url)
+
+        self.assertEqual(list(response.context['completed_tasks']), [])
+        self.assertNotContains(response, 'Tarea privada del compañero')
+
+    def test_history_does_not_leak_task_from_another_household(self):
+        Task.objects.bulk_create(
+            [
+                Task(
+                    household=self.other_household,
+                    creator=self.outsider,
+                    assignee=self.user,
+                    title='Historial secreto de otro hogar',
+                    due_date=date(2026, 9, 18),
+                    status=Task.Status.COMPLETED,
+                    completed_by=self.user,
+                    completed_at=timezone.now(),
+                )
+            ]
+        )
+
+        response = self.client.get(self.history_url)
+
+        self.assertEqual(list(response.context['completed_tasks']), [])
+        self.assertNotContains(response, 'Historial secreto de otro hogar')
+
+    def test_history_requires_authentication(self):
+        self.client.logout()
+
+        response = self.client.get(self.history_url)
+
+        self.assertRedirects(
+            response,
+            f"{reverse('chores:login')}?next={self.history_url}",
+        )
+
+    def test_history_has_empty_state_and_is_linked_from_navigation(self):
+        response = self.client.get(self.history_url)
+
+        self.assertContains(response, 'Todavía no has completado ninguna tarea.')
+        self.assertContains(response, self.history_url)

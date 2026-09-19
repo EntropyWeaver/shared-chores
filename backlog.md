@@ -165,11 +165,11 @@ Estado: listo para implementación incremental
 
 **Acceptance criteria:**
 
-- [ ] El usuario puede consultar sus tareas completadas ordenadas desde la más reciente.
-- [ ] El historial identifica la tarea y cuándo fue completada.
-- [ ] Ninguna vista permite consultar o manipular tareas de otro hogar.
-- [ ] La suite cubre accesos anónimos, usuarios del mismo hogar y usuarios de otro hogar.
-- [ ] Toda la suite del proyecto pasa.
+- [x] El usuario puede consultar sus tareas completadas ordenadas desde la más reciente.
+- [x] El historial identifica la tarea y cuándo fue completada.
+- [x] Ninguna vista permite consultar o manipular tareas de otro hogar.
+- [x] La suite cubre accesos anónimos, usuarios del mismo hogar y usuarios de otro hogar.
+- [x] Toda la suite del proyecto pasa.
 
 **Out of scope:** exportaciones, analítica y auditoría administrativa avanzada.
 
