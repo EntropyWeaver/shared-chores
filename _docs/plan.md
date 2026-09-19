@@ -1,6 +1,7 @@
 # Shared Chores — Especificación del producto (MVP)
 
-Estado: aprobado para implementación  
+Estado: MVP completado y verificado
+
 Módulo: AI Dev Tools Zoomcamp 2026 — Module 1  
 Agente de programación elegido: Codex
 
@@ -89,18 +90,18 @@ Una tarea se considera vencida cuando sigue pendiente y su fecha de vencimiento 
 
 ## 8. Criterios de aceptación del MVP
 
-- [ ] Un usuario autenticado puede crear un hogar y obtener un código para compartirlo.
-- [ ] Otro usuario puede utilizar el código válido para unirse al hogar.
-- [ ] No puede haber más de 6 miembros en el mismo hogar.
-- [ ] Un miembro puede crear una tarea y asignarla a cualquier miembro del mismo hogar.
-- [ ] No se puede asignar una tarea a alguien ajeno al hogar.
-- [ ] El panel personal muestra sólo las tareas pendientes del usuario autenticado.
-- [ ] Las tareas vencidas aparecen antes que las pendientes no vencidas.
-- [ ] Otro miembro no puede completar una tarea ajena.
-- [ ] La persona asignada puede completar su tarea y ésta aparece en el historial.
-- [ ] Una tarea puntual completada no genera otra tarea.
-- [ ] Una tarea semanal completada genera exactamente una nueva ocurrencia con vencimiento siete días después.
-- [ ] Los usuarios no pueden acceder a los datos de otros hogares.
+- [x] Un usuario autenticado puede crear un hogar y obtener un código para compartirlo.
+- [x] Otro usuario puede utilizar el código válido para unirse al hogar.
+- [x] No puede haber más de 6 miembros en el mismo hogar.
+- [x] Un miembro puede crear una tarea y asignarla a cualquier miembro del mismo hogar.
+- [x] No se puede asignar una tarea a alguien ajeno al hogar.
+- [x] El panel personal muestra sólo las tareas pendientes del usuario autenticado.
+- [x] Las tareas vencidas aparecen antes que las pendientes no vencidas.
+- [x] Otro miembro no puede completar una tarea ajena.
+- [x] La persona asignada puede completar su tarea y ésta aparece en el historial.
+- [x] Una tarea puntual completada no genera otra tarea.
+- [x] Una tarea semanal completada genera exactamente una nueva ocurrencia con vencimiento siete días después.
+- [x] Los usuarios no pueden acceder a los datos de otros hogares.
 
 ## 9. Fuera de alcance
 

@@ -1,7 +1,7 @@
 # Shared Chores — Backlog del MVP
 
 Fuente de verdad: [`_docs/plan.md`](_docs/plan.md)  
-Estado: listo para implementación incremental
+Estado: MVP completado y verificado
 
 ## Reglas de trabajo
 
@@ -183,11 +183,11 @@ Estado: listo para implementación incremental
 
 **Acceptance criteria:**
 
-- [ ] El README explica instalación, migraciones, ejecución y tests.
-- [ ] Una persona puede reproducir el proyecto usando `uv sync`.
-- [ ] `uv run python manage.py check` no informa de problemas.
-- [ ] `uv run python manage.py test` ejecuta y supera toda la suite.
-- [ ] Los cuatro flujos principales del `plan.md` pueden demostrarse manualmente.
+- [x] El README explica instalación, migraciones, ejecución y tests.
+- [x] Una persona puede reproducir el proyecto usando `uv sync`.
+- [x] `uv run python manage.py check` no informa de problemas.
+- [x] `uv run python manage.py test` ejecuta y supera toda la suite.
+- [x] Los cuatro flujos principales del `plan.md` pueden demostrarse manualmente.
 
 **Out of scope:** despliegue público, CI/CD y funcionalidades posteriores al MVP.
 
