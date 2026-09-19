@@ -13,7 +13,8 @@
                 <li>{{ membership.user.username }}</li>
             {% endfor %}
         </ul>
-        <p>Aquí aparecerán tus tareas.</p>
+        <p><a href="{% url 'chores:create-task' %}">Crear una tarea</a></p>
+        <p>Aquí aparecerán tus tareas pendientes.</p>
     {% else %}
         <p>Todavía no perteneces a ningún hogar.</p>
         <p>

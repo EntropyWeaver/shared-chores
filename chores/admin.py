@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from chores.models import Household, Membership
+from chores.models import Household, Membership, Task
 
 
 @admin.register(Household)
@@ -14,3 +14,17 @@ class MembershipAdmin(admin.ModelAdmin):
     list_display = ('user', 'household', 'joined_at')
     list_filter = ('household',)
     search_fields = ('user__username', 'household__name')
+
+
+@admin.register(Task)
+class TaskAdmin(admin.ModelAdmin):
+    list_display = (
+        'title',
+        'household',
+        'assignee',
+        'due_date',
+        'recurrence',
+        'status',
+    )
+    list_filter = ('status', 'recurrence', 'household')
+    search_fields = ('title', 'assignee__username', 'household__name')

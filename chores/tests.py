@@ -1,3 +1,4 @@
+from datetime import date
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -6,7 +7,7 @@ from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
 
-from chores.models import Household, Membership
+from chores.models import Household, Membership, Task
 
 
 User = get_user_model()
@@ -274,4 +275,174 @@ class HouseholdFlowTests(TestCase):
                 name='Nuevo piso',
                 access_code='FRESH123',
             ).exists()
+        )
+
+
+class TaskCreationTests(TestCase):
+    def setUp(self):
+        self.household = Household.objects.create(
+            name='Piso de Salamanca',
+            access_code='TASKHOME',
+        )
+        self.creator = User.objects.create_user(username='borja')
+        self.housemate = User.objects.create_user(username='alex')
+        self.household.add_member(self.creator)
+        self.household.add_member(self.housemate)
+
+        self.other_household = Household.objects.create(
+            name='Otro hogar',
+            access_code='OTHERHOME',
+        )
+        self.outsider = User.objects.create_user(username='outsider')
+        self.other_household.add_member(self.outsider)
+
+        self.client.force_login(self.creator)
+
+    def test_member_can_create_weekly_task_for_housemate(self):
+        response = self.client.post(
+            reverse('chores:create-task'),
+            {
+                'title': 'Limpiar el baño',
+                'description': 'Incluye el espejo y la ducha.',
+                'assignee': self.housemate.pk,
+                'due_date': '2026-09-25',
+                'recurrence': Task.Recurrence.WEEKLY,
+            },
+            follow=True,
+        )
+
+        task = Task.objects.get()
+        self.assertRedirects(response, reverse('chores:dashboard'))
+        self.assertEqual(task.household, self.household)
+        self.assertEqual(task.creator, self.creator)
+        self.assertEqual(task.assignee, self.housemate)
+        self.assertEqual(task.title, 'Limpiar el baño')
+        self.assertEqual(task.description, 'Incluye el espejo y la ducha.')
+        self.assertEqual(task.due_date, date(2026, 9, 25))
+        self.assertEqual(task.recurrence, Task.Recurrence.WEEKLY)
+        self.assertEqual(task.status, Task.Status.PENDING)
+        self.assertContains(response, 'Tarea creada correctamente.')
+
+    def test_member_can_create_one_off_task_with_empty_description(self):
+        response = self.client.post(
+            reverse('chores:create-task'),
+            {
+                'title': 'Bajar el cartón',
+                'description': '',
+                'assignee': self.creator.pk,
+                'due_date': '2026-09-26',
+                'recurrence': Task.Recurrence.NONE,
+            },
+        )
+
+        self.assertRedirects(response, reverse('chores:dashboard'))
+        task = Task.objects.get()
+        self.assertEqual(task.description, '')
+        self.assertEqual(task.assignee, self.creator)
+        self.assertEqual(task.recurrence, Task.Recurrence.NONE)
+
+    def test_recurrence_only_accepts_none_or_weekly(self):
+        self.assertEqual(
+            {choice.value for choice in Task.Recurrence},
+            {'none', 'weekly'},
+        )
+
+        with self.assertRaises(ValidationError) as error:
+            Task.objects.create(
+                household=self.household,
+                creator=self.creator,
+                assignee=self.housemate,
+                title='Frecuencia imposible',
+                due_date=date(2026, 9, 25),
+                recurrence='monthly',
+            )
+
+        self.assertIn('recurrence', error.exception.message_dict)
+        self.assertEqual(Task.objects.count(), 0)
+
+    def test_form_only_exposes_members_of_current_household(self):
+        response = self.client.get(reverse('chores:create-task'))
+
+        assignee_ids = set(
+            response.context['form']
+            .fields['assignee']
+            .queryset.values_list('pk', flat=True)
+        )
+
+        self.assertEqual(assignee_ids, {self.creator.pk, self.housemate.pk})
+        self.assertNotIn(self.outsider.pk, assignee_ids)
+
+    def test_tampered_form_cannot_assign_task_to_another_household(self):
+        response = self.client.post(
+            reverse('chores:create-task'),
+            {
+                'title': 'Intento cruzado',
+                'description': '',
+                'assignee': self.outsider.pk,
+                'due_date': '2026-09-25',
+                'recurrence': Task.Recurrence.NONE,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('assignee', response.context['form'].errors)
+        self.assertEqual(Task.objects.count(), 0)
+
+    def test_model_rejects_creator_or_assignee_from_another_household(self):
+        invalid_users = {
+            'creator': (self.outsider, self.housemate),
+            'assignee': (self.creator, self.outsider),
+        }
+
+        for invalid_field, (creator, assignee) in invalid_users.items():
+            with self.subTest(invalid_field=invalid_field):
+                with self.assertRaises(ValidationError) as error:
+                    Task.objects.create(
+                        household=self.household,
+                        creator=creator,
+                        assignee=assignee,
+                        title='Cruce de hogares',
+                        due_date=date(2026, 9, 25),
+                    )
+
+                self.assertIn(invalid_field, error.exception.message_dict)
+
+        self.assertEqual(Task.objects.count(), 0)
+
+    def test_required_task_fields_are_validated(self):
+        response = self.client.post(
+            reverse('chores:create-task'),
+            {
+                'description': 'Sin título ni fecha.',
+                'assignee': self.housemate.pk,
+                'recurrence': Task.Recurrence.NONE,
+            },
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('title', response.context['form'].errors)
+        self.assertIn('due_date', response.context['form'].errors)
+        self.assertEqual(Task.objects.count(), 0)
+
+    def test_user_without_household_cannot_create_tasks(self):
+        user_without_household = User.objects.create_user(username='homeless')
+        self.client.force_login(user_without_household)
+
+        response = self.client.get(reverse('chores:create-task'), follow=True)
+
+        self.assertRedirects(response, reverse('chores:dashboard'))
+        self.assertContains(
+            response,
+            'Necesitas pertenecer a un hogar para crear tareas.',
+        )
+
+    def test_task_creation_requires_authentication(self):
+        self.client.logout()
+        route = reverse('chores:create-task')
+
+        response = self.client.get(route)
+
+        self.assertRedirects(
+            response,
+            f"{reverse('chores:login')}?next={route}",
         )

@@ -67,3 +67,77 @@ class Membership(models.Model):
     def save(self, *args, **kwargs):
         self.full_clean()
         return super().save(*args, **kwargs)
+
+
+class Task(models.Model):
+    """A household chore assigned to one of its members."""
+
+    class Recurrence(models.TextChoices):
+        NONE = 'none', 'Puntual'
+        WEEKLY = 'weekly', 'Semanal'
+
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pendiente'
+        COMPLETED = 'completed', 'Completada'
+
+    household = models.ForeignKey(
+        Household,
+        on_delete=models.CASCADE,
+        related_name='tasks',
+    )
+    creator = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='created_tasks',
+    )
+    assignee = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='assigned_tasks',
+    )
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True)
+    due_date = models.DateField()
+    recurrence = models.CharField(
+        max_length=6,
+        choices=Recurrence,
+        default=Recurrence.NONE,
+    )
+    status = models.CharField(
+        max_length=9,
+        choices=Status,
+        default=Status.PENDING,
+        editable=False,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+
+    def clean(self):
+        super().clean()
+
+        if not self.household_id:
+            return
+
+        errors = {}
+        household_members = Membership.objects.filter(
+            household_id=self.household_id,
+        )
+
+        if self.creator_id and not household_members.filter(
+            user_id=self.creator_id,
+        ).exists():
+            errors['creator'] = 'The creator must belong to the task household.'
+
+        if self.assignee_id and not household_members.filter(
+            user_id=self.assignee_id,
+        ).exists():
+            errors['assignee'] = 'The assignee must belong to the task household.'
+
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        return super().save(*args, **kwargs)

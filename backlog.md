@@ -93,11 +93,11 @@ Estado: listo para implementación incremental
 
 **Acceptance criteria:**
 
-- [ ] Un miembro puede crear una tarea con título, responsable, vencimiento y repetición.
-- [ ] La repetición sólo admite `none` o `weekly`.
-- [ ] El responsable debe pertenecer al mismo hogar que quien crea la tarea.
-- [ ] No se puede acceder mediante el formulario a miembros de otros hogares.
-- [ ] Los casos válidos e inválidos están cubiertos por tests.
+- [x] Un miembro puede crear una tarea con título, responsable, vencimiento y repetición.
+- [x] La repetición sólo admite `none` o `weekly`.
+- [x] El responsable debe pertenecer al mismo hogar que quien crea la tarea.
+- [x] No se puede acceder mediante el formulario a miembros de otros hogares.
+- [x] Los casos válidos e inválidos están cubiertos por tests.
 
 **Out of scope:** edición, eliminación, reasignación y rotación automática.
 

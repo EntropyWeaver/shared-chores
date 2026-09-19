@@ -4,7 +4,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import redirect, render
 
-from chores.forms import CreateHouseholdForm, JoinHouseholdForm
+from chores.forms import CreateHouseholdForm, CreateTaskForm, JoinHouseholdForm
 from chores.models import Membership
 from chores.services import (
     HouseholdOperationError,
@@ -108,3 +108,40 @@ def join_household(request):
         form = JoinHouseholdForm()
 
     return render(request, 'chores/join_household.html', {'form': form})
+
+
+@login_required
+def create_task(request):
+    """Create a task assigned to a member of the user's household."""
+    membership = (
+        Membership.objects.select_related('household')
+        .filter(user=request.user)
+        .first()
+    )
+
+    if membership is None:
+        messages.error(
+            request,
+            'Necesitas pertenecer a un hogar para crear tareas.',
+        )
+        return redirect('chores:dashboard')
+
+    household = membership.household
+
+    if request.method == 'POST':
+        form = CreateTaskForm(request.POST, household=household)
+        if form.is_valid():
+            task = form.save(commit=False)
+            task.household = household
+            task.creator = request.user
+            task.save()
+            messages.success(request, 'Tarea creada correctamente.')
+            return redirect('chores:dashboard')
+    else:
+        form = CreateTaskForm(household=household)
+
+    return render(
+        request,
+        'chores/create_task.html',
+        {'form': form},
+    )

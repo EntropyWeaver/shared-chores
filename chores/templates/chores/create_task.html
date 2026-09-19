@@ -1,0 +1,13 @@
+{% extends "chores/base.html" %}
+
+{% block title %}Crear tarea | Shared Chores{% endblock %}
+
+{% block content %}
+    <h1>Crear una tarea</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Crear tarea</button>
+    </form>
+    <p><a href="{% url 'chores:dashboard' %}">Volver a mi panel</a></p>
+{% endblock %}
