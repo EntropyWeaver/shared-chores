@@ -24,6 +24,7 @@ class TaskAdmin(admin.ModelAdmin):
         'assignee',
         'due_date',
         'recurrence',
+        'generated_from',
         'status',
         'completed_by',
         'completed_at',

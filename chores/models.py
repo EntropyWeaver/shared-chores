@@ -103,6 +103,14 @@ class Task(models.Model):
         choices=Recurrence,
         default=Recurrence.NONE,
     )
+    generated_from = models.OneToOneField(
+        'self',
+        blank=True,
+        editable=False,
+        null=True,
+        on_delete=models.PROTECT,
+        related_name='next_occurrence',
+    )
     status = models.CharField(
         max_length=9,
         choices=Status,

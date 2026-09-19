@@ -147,11 +147,11 @@ Estado: listo para implementación incremental
 
 **Acceptance criteria:**
 
-- [ ] Completar una tarea puntual no genera ninguna tarea nueva.
-- [ ] Completar una tarea semanal genera exactamente una ocurrencia pendiente.
-- [ ] La nueva ocurrencia conserva título, descripción, hogar, responsable y repetición.
-- [ ] Su vencimiento es siete días posterior a la fecha de finalización.
-- [ ] Los reintentos no pueden producir duplicados.
+- [x] Completar una tarea puntual no genera ninguna tarea nueva.
+- [x] Completar una tarea semanal genera exactamente una ocurrencia pendiente.
+- [x] La nueva ocurrencia conserva título, descripción, hogar, responsable y repetición.
+- [x] Su vencimiento es siete días posterior a la fecha de finalización.
+- [x] Los reintentos no pueden producir duplicados.
 
 **Out of scope:** calendarios personalizados, recuperación de semanas omitidas y cambio automático de responsable.
 

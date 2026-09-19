@@ -1,4 +1,5 @@
 import secrets
+from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
@@ -121,4 +122,17 @@ def complete_task_for_user(*, task_id, user):
     task.completed_by = user
     task.completed_at = timezone.now()
     task.save(update_fields=('status', 'completed_by', 'completed_at'))
+
+    if task.recurrence == Task.Recurrence.WEEKLY:
+        Task.objects.create(
+            household=task.household,
+            creator=task.creator,
+            assignee=task.assignee,
+            title=task.title,
+            description=task.description,
+            due_date=timezone.localdate(task.completed_at) + timedelta(days=7),
+            recurrence=Task.Recurrence.WEEKLY,
+            generated_from=task,
+        )
+
     return task

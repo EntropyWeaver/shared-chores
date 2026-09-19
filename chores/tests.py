@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone as datetime_timezone
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -724,3 +724,84 @@ class TaskCompletionTests(TestCase):
 
         self.assertIn('completed_by', pending_error.exception.message_dict)
         self.assertIn('completed_at', pending_error.exception.message_dict)
+
+
+class WeeklyTaskRecurrenceTests(TestCase):
+    def setUp(self):
+        self.household = Household.objects.create(
+            name='Piso principal',
+            access_code='WEEKLY1',
+        )
+        self.creator = User.objects.create_user(username='alex')
+        self.assignee = User.objects.create_user(username='borja')
+        self.household.add_member(self.creator)
+        self.household.add_member(self.assignee)
+        self.client.force_login(self.assignee)
+
+    def create_task(self, *, recurrence):
+        return Task.objects.create(
+            household=self.household,
+            creator=self.creator,
+            assignee=self.assignee,
+            title='Limpiar la cocina',
+            description='Encimera, fregadero y suelo',
+            due_date=date(2026, 9, 20),
+            recurrence=recurrence,
+        )
+
+    def complete(self, task):
+        return self.client.post(
+            reverse('chores:complete-task', args=(task.pk,)),
+            follow=True,
+        )
+
+    def test_completing_one_off_task_does_not_create_another_task(self):
+        task = self.create_task(recurrence=Task.Recurrence.NONE)
+
+        response = self.complete(task)
+
+        self.assertRedirects(response, reverse('chores:dashboard'))
+        self.assertEqual(Task.objects.count(), 1)
+        self.assertFalse(Task.objects.filter(generated_from=task).exists())
+
+    def test_completing_weekly_task_creates_one_pending_occurrence(self):
+        task = self.create_task(recurrence=Task.Recurrence.WEEKLY)
+        completion_time = datetime(
+            2026,
+            9,
+            19,
+            23,
+            30,
+            tzinfo=datetime_timezone.utc,
+        )
+
+        with patch('chores.services.timezone.now', return_value=completion_time):
+            response = self.complete(task)
+
+        self.assertRedirects(response, reverse('chores:dashboard'))
+        task.refresh_from_db()
+        next_occurrence = Task.objects.get(generated_from=task)
+
+        self.assertEqual(Task.objects.count(), 2)
+        self.assertEqual(task.status, Task.Status.COMPLETED)
+        self.assertEqual(next_occurrence.status, Task.Status.PENDING)
+        self.assertEqual(next_occurrence.title, task.title)
+        self.assertEqual(next_occurrence.description, task.description)
+        self.assertEqual(next_occurrence.household, task.household)
+        self.assertEqual(next_occurrence.creator, task.creator)
+        self.assertEqual(next_occurrence.assignee, task.assignee)
+        self.assertEqual(next_occurrence.recurrence, Task.Recurrence.WEEKLY)
+        self.assertEqual(next_occurrence.due_date, date(2026, 9, 26))
+        self.assertIsNone(next_occurrence.completed_by)
+        self.assertIsNone(next_occurrence.completed_at)
+
+    def test_retrying_weekly_completion_does_not_create_duplicates(self):
+        task = self.create_task(recurrence=Task.Recurrence.WEEKLY)
+        complete_url = reverse('chores:complete-task', args=(task.pk,))
+
+        self.client.post(complete_url)
+        response = self.client.post(complete_url, follow=True)
+
+        self.assertEqual(Task.objects.count(), 2)
+        self.assertEqual(Task.objects.filter(generated_from=task).count(), 1)
+        self.assertContains(response, 'Esta tarea ya estaba completada.')

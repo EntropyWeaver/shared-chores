@@ -6,7 +6,7 @@ Este repositorio forma parte del Module 1 de **AI Dev Tools Zoomcamp 2026**. El 
 
 ## Estado
 
-Especificación y backlog aprobados. Las Tasks 1–7 están completadas: cada responsable puede consultar y completar sus tareas de forma segura, conservando quién realizó la acción y cuándo.
+Especificación y backlog aprobados. Las Tasks 1–8 están completadas: cada responsable puede consultar y completar sus tareas de forma segura, conservando quién realizó la acción y cuándo. Al completar una tarea semanal se genera exactamente una nueva ocurrencia pendiente siete días después.
 
 ## Funcionalidades previstas
 
@@ -29,4 +29,4 @@ Especificación y backlog aprobados. Las Tasks 1–7 están completadas: cada re
 
 ## Próximo paso
 
-Implementar la Task 8 del backlog: generar la siguiente ocurrencia semanal.
+Implementar la Task 9 del backlog: añadir el historial y endurecer el aislamiento entre hogares.
