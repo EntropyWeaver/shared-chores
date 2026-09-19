@@ -3,9 +3,10 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.shortcuts import redirect, render
+from django.utils import timezone
 
 from chores.forms import CreateHouseholdForm, CreateTaskForm, JoinHouseholdForm
-from chores.models import Membership
+from chores.models import Membership, Task
 from chores.services import (
     HouseholdOperationError,
     create_household_for_user,
@@ -37,7 +38,7 @@ def signup(request):
 
 @login_required
 def dashboard(request):
-    """Show household details or the actions for joining one."""
+    """Show household details and the user's pending tasks."""
     membership = (
         Membership.objects.select_related('household')
         .filter(user=request.user)
@@ -47,6 +48,22 @@ def dashboard(request):
     household_members = (
         household.memberships.select_related('user') if household else []
     )
+    overdue_tasks = []
+    upcoming_tasks = []
+
+    if household:
+        today = timezone.localdate()
+        personal_tasks = Task.objects.filter(
+            household=household,
+            assignee=request.user,
+            status=Task.Status.PENDING,
+        )
+        overdue_tasks = personal_tasks.filter(
+            due_date__lt=today,
+        ).order_by('due_date', 'id')
+        upcoming_tasks = personal_tasks.filter(
+            due_date__gte=today,
+        ).order_by('due_date', 'id')
 
     return render(
         request,
@@ -54,6 +71,8 @@ def dashboard(request):
         {
             'household': household,
             'household_members': household_members,
+            'overdue_tasks': overdue_tasks,
+            'upcoming_tasks': upcoming_tasks,
         },
     )
 

@@ -111,11 +111,11 @@ Estado: listo para implementación incremental
 
 **Acceptance criteria:**
 
-- [ ] El panel sólo muestra tareas pendientes asignadas al usuario autenticado.
-- [ ] Las tareas vencidas aparecen antes que las no vencidas.
-- [ ] Dentro de cada grupo, las tareas se ordenan por vencimiento ascendente.
-- [ ] Las tareas completadas no aparecen en el panel principal.
-- [ ] No se filtra información perteneciente a otros hogares.
+- [x] El panel sólo muestra tareas pendientes asignadas al usuario autenticado.
+- [x] Las tareas vencidas aparecen antes que las no vencidas.
+- [x] Dentro de cada grupo, las tareas se ordenan por vencimiento ascendente.
+- [x] Las tareas completadas no aparecen en el panel principal.
+- [x] No se filtra información perteneciente a otros hogares.
 
 **Out of scope:** calendario, estadísticas, rankings y tablero completo del hogar.
 

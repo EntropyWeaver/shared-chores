@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from chores.models import Household, Membership, Task
 
@@ -446,3 +447,137 @@ class TaskCreationTests(TestCase):
             response,
             f"{reverse('chores:login')}?next={route}",
         )
+
+
+class PersonalDashboardTests(TestCase):
+    def setUp(self):
+        self.household = Household.objects.create(
+            name='Piso principal',
+            access_code='DASHHOME',
+        )
+        self.user = User.objects.create_user(username='borja')
+        self.housemate = User.objects.create_user(username='alex')
+        self.household.add_member(self.user)
+        self.household.add_member(self.housemate)
+
+        self.other_household = Household.objects.create(
+            name='Piso ajeno',
+            access_code='DASHOTHR',
+        )
+        self.outsider = User.objects.create_user(username='outsider')
+        self.other_household.add_member(self.outsider)
+
+        self.client.force_login(self.user)
+        self.today = timezone.localdate()
+
+    def create_task(
+        self,
+        *,
+        title,
+        due_date,
+        assignee=None,
+        status=Task.Status.PENDING,
+    ):
+        return Task.objects.create(
+            household=self.household,
+            creator=self.user,
+            assignee=assignee or self.user,
+            title=title,
+            due_date=due_date,
+            status=status,
+        )
+
+    def test_dashboard_only_shows_pending_tasks_assigned_to_current_user(self):
+        mine = self.create_task(
+            title='Mi tarea pendiente',
+            due_date=self.today,
+        )
+        self.create_task(
+            title='Tarea del compañero',
+            due_date=self.today,
+            assignee=self.housemate,
+        )
+        self.create_task(
+            title='Mi tarea completada',
+            due_date=self.today - timedelta(days=1),
+            status=Task.Status.COMPLETED,
+        )
+
+        response = self.client.get(reverse('chores:dashboard'))
+        displayed_tasks = [
+            *response.context['overdue_tasks'],
+            *response.context['upcoming_tasks'],
+        ]
+
+        self.assertEqual(displayed_tasks, [mine])
+        self.assertContains(response, 'Mi tarea pendiente')
+        self.assertNotContains(response, 'Tarea del compañero')
+        self.assertNotContains(response, 'Mi tarea completada')
+
+    def test_overdue_and_upcoming_tasks_are_grouped_and_ordered(self):
+        oldest_overdue = self.create_task(
+            title='Muy vencida',
+            due_date=self.today - timedelta(days=5),
+        )
+        recent_overdue = self.create_task(
+            title='Vencida ayer',
+            due_date=self.today - timedelta(days=1),
+        )
+        due_today = self.create_task(
+            title='Vence hoy',
+            due_date=self.today,
+        )
+        due_later = self.create_task(
+            title='Vence después',
+            due_date=self.today + timedelta(days=3),
+        )
+
+        response = self.client.get(reverse('chores:dashboard'))
+
+        self.assertEqual(
+            list(response.context['overdue_tasks']),
+            [oldest_overdue, recent_overdue],
+        )
+        self.assertEqual(
+            list(response.context['upcoming_tasks']),
+            [due_today, due_later],
+        )
+
+        content = response.content.decode()
+        self.assertLess(
+            content.index('Tareas vencidas'),
+            content.index('Próximas tareas'),
+        )
+        self.assertLess(
+            content.index('Muy vencida'),
+            content.index('Vencida ayer'),
+        )
+        self.assertLess(
+            content.index('Vence hoy'),
+            content.index('Vence después'),
+        )
+
+    def test_dashboard_does_not_leak_inconsistent_task_from_other_household(self):
+        Task.objects.bulk_create(
+            [
+                Task(
+                    household=self.other_household,
+                    creator=self.outsider,
+                    assignee=self.user,
+                    title='Tarea secreta de otro hogar',
+                    due_date=self.today,
+                )
+            ]
+        )
+
+        response = self.client.get(reverse('chores:dashboard'))
+
+        self.assertNotContains(response, 'Tarea secreta de otro hogar')
+        self.assertEqual(list(response.context['overdue_tasks']), [])
+        self.assertEqual(list(response.context['upcoming_tasks']), [])
+
+    def test_dashboard_explains_when_there_are_no_pending_tasks(self):
+        response = self.client.get(reverse('chores:dashboard'))
+
+        self.assertContains(response, 'No tienes tareas vencidas.')
+        self.assertContains(response, 'No tienes próximas tareas pendientes.')

@@ -14,7 +14,42 @@
             {% endfor %}
         </ul>
         <p><a href="{% url 'chores:create-task' %}">Crear una tarea</a></p>
-        <p>Aquí aparecerán tus tareas pendientes.</p>
+
+        <section aria-labelledby="overdue-tasks-heading">
+            <h3 id="overdue-tasks-heading">Tareas vencidas</h3>
+            {% if overdue_tasks %}
+                <ul>
+                    {% for task in overdue_tasks %}
+                        <li>
+                            <strong>{{ task.title }}</strong>
+                            — venció el {{ task.due_date|date:"d/m/Y" }}
+                            — {{ task.get_recurrence_display }}
+                            {% if task.description %}<p>{{ task.description }}</p>{% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No tienes tareas vencidas.</p>
+            {% endif %}
+        </section>
+
+        <section aria-labelledby="upcoming-tasks-heading">
+            <h3 id="upcoming-tasks-heading">Próximas tareas</h3>
+            {% if upcoming_tasks %}
+                <ul>
+                    {% for task in upcoming_tasks %}
+                        <li>
+                            <strong>{{ task.title }}</strong>
+                            — vence el {{ task.due_date|date:"d/m/Y" }}
+                            — {{ task.get_recurrence_display }}
+                            {% if task.description %}<p>{{ task.description }}</p>{% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>No tienes próximas tareas pendientes.</p>
+            {% endif %}
+        </section>
     {% else %}
         <p>Todavía no perteneces a ningún hogar.</p>
         <p>
