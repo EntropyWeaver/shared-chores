@@ -109,6 +109,19 @@ class Task(models.Model):
         default=Status.PENDING,
         editable=False,
     )
+    completed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        editable=False,
+        null=True,
+        on_delete=models.PROTECT,
+        related_name='completed_tasks',
+    )
+    completed_at = models.DateTimeField(
+        blank=True,
+        editable=False,
+        null=True,
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -134,6 +147,20 @@ class Task(models.Model):
             user_id=self.assignee_id,
         ).exists():
             errors['assignee'] = 'The assignee must belong to the task household.'
+
+        if self.status == self.Status.COMPLETED:
+            if not self.completed_by_id:
+                errors['completed_by'] = 'A completed task must record its user.'
+            elif self.assignee_id != self.completed_by_id:
+                errors['completed_by'] = 'Only the assignee can complete this task.'
+
+            if not self.completed_at:
+                errors['completed_at'] = 'A completed task must record its time.'
+        else:
+            if self.completed_by_id:
+                errors['completed_by'] = 'A pending task cannot have a completing user.'
+            if self.completed_at:
+                errors['completed_at'] = 'A pending task cannot have a completion time.'
 
         if errors:
             raise ValidationError(errors)

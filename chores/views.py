@@ -2,13 +2,20 @@ from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
+from django.core.exceptions import PermissionDenied
+from django.http import Http404
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.views.decorators.http import require_POST
 
 from chores.forms import CreateHouseholdForm, CreateTaskForm, JoinHouseholdForm
 from chores.models import Membership, Task
 from chores.services import (
     HouseholdOperationError,
+    TaskAlreadyCompletedError,
+    TaskNotFoundError,
+    TaskPermissionError,
+    complete_task_for_user,
     create_household_for_user,
     join_household_by_code,
 )
@@ -164,3 +171,21 @@ def create_task(request):
         'chores/create_task.html',
         {'form': form},
     )
+
+
+@login_required
+@require_POST
+def complete_task(request, task_id):
+    """Complete one task if the authenticated user is its assignee."""
+    try:
+        complete_task_for_user(task_id=task_id, user=request.user)
+    except TaskNotFoundError as error:
+        raise Http404 from error
+    except TaskPermissionError as error:
+        raise PermissionDenied from error
+    except TaskAlreadyCompletedError:
+        messages.error(request, 'Esta tarea ya estaba completada.')
+    else:
+        messages.success(request, 'Tarea completada correctamente.')
+
+    return redirect('chores:dashboard')

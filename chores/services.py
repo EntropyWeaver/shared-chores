@@ -2,8 +2,9 @@ import secrets
 
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 
-from chores.models import Household, Membership
+from chores.models import Household, Membership, Task
 
 
 ACCESS_CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -13,6 +14,22 @@ ACCESS_CODE_ATTEMPTS = 10
 
 class HouseholdOperationError(Exception):
     """A household operation that cannot be completed safely."""
+
+
+class TaskCompletionError(Exception):
+    """Base error for a task completion that cannot be performed."""
+
+
+class TaskNotFoundError(TaskCompletionError):
+    """The task is unavailable within the user's household."""
+
+
+class TaskPermissionError(TaskCompletionError):
+    """The user is not allowed to complete the task."""
+
+
+class TaskAlreadyCompletedError(TaskCompletionError):
+    """The task has already completed its state transition."""
 
 
 def generate_access_code():
@@ -73,3 +90,35 @@ def join_household_by_code(*, access_code, user):
 
     household.add_member(locked_user)
     return household
+
+
+@transaction.atomic
+def complete_task_for_user(*, task_id, user):
+    """Complete a task once, recording its assignee and completion time."""
+    membership = (
+        Membership.objects.select_related('household')
+        .filter(user=user)
+        .first()
+    )
+    if membership is None:
+        raise TaskNotFoundError
+
+    try:
+        task = Task.objects.select_for_update().get(
+            pk=task_id,
+            household=membership.household,
+        )
+    except Task.DoesNotExist as error:
+        raise TaskNotFoundError from error
+
+    if task.assignee_id != user.pk:
+        raise TaskPermissionError
+
+    if task.status == Task.Status.COMPLETED:
+        raise TaskAlreadyCompletedError
+
+    task.status = Task.Status.COMPLETED
+    task.completed_by = user
+    task.completed_at = timezone.now()
+    task.save(update_fields=('status', 'completed_by', 'completed_at'))
+    return task

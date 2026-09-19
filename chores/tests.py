@@ -478,13 +478,22 @@ class PersonalDashboardTests(TestCase):
         assignee=None,
         status=Task.Status.PENDING,
     ):
+        actual_assignee = assignee or self.user
+        completion_data = {}
+        if status == Task.Status.COMPLETED:
+            completion_data = {
+                'completed_by': actual_assignee,
+                'completed_at': timezone.now(),
+            }
+
         return Task.objects.create(
             household=self.household,
             creator=self.user,
-            assignee=assignee or self.user,
+            assignee=actual_assignee,
             title=title,
             due_date=due_date,
             status=status,
+            **completion_data,
         )
 
     def test_dashboard_only_shows_pending_tasks_assigned_to_current_user(self):
@@ -581,3 +590,137 @@ class PersonalDashboardTests(TestCase):
 
         self.assertContains(response, 'No tienes tareas vencidas.')
         self.assertContains(response, 'No tienes próximas tareas pendientes.')
+
+
+class TaskCompletionTests(TestCase):
+    def setUp(self):
+        self.household = Household.objects.create(
+            name='Piso principal',
+            access_code='COMPLETE1',
+        )
+        self.assignee = User.objects.create_user(username='borja')
+        self.housemate = User.objects.create_user(username='alex')
+        self.household.add_member(self.assignee)
+        self.household.add_member(self.housemate)
+
+        self.other_household = Household.objects.create(
+            name='Piso ajeno',
+            access_code='COMPLETE2',
+        )
+        self.outsider = User.objects.create_user(username='outsider')
+        self.other_household.add_member(self.outsider)
+
+        self.task = Task.objects.create(
+            household=self.household,
+            creator=self.housemate,
+            assignee=self.assignee,
+            title='Limpiar la cocina',
+            due_date=timezone.localdate(),
+        )
+        self.complete_url = reverse(
+            'chores:complete-task',
+            args=(self.task.pk,),
+        )
+        self.client.force_login(self.assignee)
+
+    def test_assignee_can_complete_task_and_completion_is_recorded(self):
+        before_completion = timezone.now()
+
+        response = self.client.post(self.complete_url, follow=True)
+
+        after_completion = timezone.now()
+        self.task.refresh_from_db()
+        self.assertRedirects(response, reverse('chores:dashboard'))
+        self.assertEqual(self.task.status, Task.Status.COMPLETED)
+        self.assertEqual(self.task.completed_by, self.assignee)
+        self.assertGreaterEqual(self.task.completed_at, before_completion)
+        self.assertLessEqual(self.task.completed_at, after_completion)
+        self.assertContains(response, 'Tarea completada correctamente.')
+        self.assertNotContains(response, self.task.title)
+
+    def test_other_household_member_cannot_complete_assignees_task(self):
+        self.client.force_login(self.housemate)
+
+        response = self.client.post(self.complete_url)
+
+        self.assertEqual(response.status_code, 403)
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, Task.Status.PENDING)
+        self.assertIsNone(self.task.completed_by)
+        self.assertIsNone(self.task.completed_at)
+
+    def test_user_from_another_household_cannot_discover_or_complete_task(self):
+        self.client.force_login(self.outsider)
+
+        response = self.client.post(self.complete_url)
+
+        self.assertEqual(response.status_code, 404)
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, Task.Status.PENDING)
+
+    def test_completed_task_cannot_be_completed_twice(self):
+        self.client.post(self.complete_url)
+        self.task.refresh_from_db()
+        first_completed_at = self.task.completed_at
+
+        response = self.client.post(self.complete_url, follow=True)
+
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, Task.Status.COMPLETED)
+        self.assertEqual(self.task.completed_by, self.assignee)
+        self.assertEqual(self.task.completed_at, first_completed_at)
+        self.assertEqual(Task.objects.count(), 1)
+        self.assertContains(response, 'Esta tarea ya estaba completada.')
+
+    def test_completion_rejects_get_without_changing_task(self):
+        response = self.client.get(self.complete_url)
+
+        self.assertEqual(response.status_code, 405)
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, Task.Status.PENDING)
+
+    def test_completion_requires_authentication(self):
+        self.client.logout()
+
+        response = self.client.post(self.complete_url)
+
+        self.assertRedirects(
+            response,
+            f"{reverse('chores:login')}?next={self.complete_url}",
+        )
+        self.task.refresh_from_db()
+        self.assertEqual(self.task.status, Task.Status.PENDING)
+
+    def test_dashboard_exposes_post_action_for_assigned_pending_task(self):
+        response = self.client.get(reverse('chores:dashboard'))
+
+        self.assertContains(response, self.complete_url)
+        self.assertContains(response, 'Marcar como completada')
+
+    def test_model_rejects_inconsistent_completion_metadata(self):
+        with self.assertRaises(ValidationError) as completed_error:
+            Task.objects.create(
+                household=self.household,
+                creator=self.housemate,
+                assignee=self.assignee,
+                title='Completada sin auditoría',
+                due_date=timezone.localdate(),
+                status=Task.Status.COMPLETED,
+            )
+
+        self.assertIn('completed_by', completed_error.exception.message_dict)
+        self.assertIn('completed_at', completed_error.exception.message_dict)
+
+        with self.assertRaises(ValidationError) as pending_error:
+            Task.objects.create(
+                household=self.household,
+                creator=self.housemate,
+                assignee=self.assignee,
+                title='Pendiente con auditoría',
+                due_date=timezone.localdate(),
+                completed_by=self.assignee,
+                completed_at=timezone.now(),
+            )
+
+        self.assertIn('completed_by', pending_error.exception.message_dict)
+        self.assertIn('completed_at', pending_error.exception.message_dict)

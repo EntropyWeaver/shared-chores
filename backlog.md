@@ -129,11 +129,11 @@ Estado: listo para implementación incremental
 
 **Acceptance criteria:**
 
-- [ ] Sólo la persona asignada puede completar la tarea.
-- [ ] La finalización registra usuario y fecha/hora.
-- [ ] Otro usuario no puede completar una tarea ajena.
-- [ ] Una tarea completada no puede completarse de nuevo.
-- [ ] La operación y sus permisos están cubiertos por tests.
+- [x] Sólo la persona asignada puede completar la tarea.
+- [x] La finalización registra usuario y fecha/hora.
+- [x] Otro usuario no puede completar una tarea ajena.
+- [x] Una tarea completada no puede completarse de nuevo.
+- [x] La operación y sus permisos están cubiertos por tests.
 
 **Out of scope:** aprobación por terceros, fotografías, comentarios y reapertura.
 

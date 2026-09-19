@@ -25,6 +25,8 @@ class TaskAdmin(admin.ModelAdmin):
         'due_date',
         'recurrence',
         'status',
+        'completed_by',
+        'completed_at',
     )
     list_filter = ('status', 'recurrence', 'household')
     search_fields = ('title', 'assignee__username', 'household__name')

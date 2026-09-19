@@ -25,6 +25,10 @@
                             — venció el {{ task.due_date|date:"d/m/Y" }}
                             — {{ task.get_recurrence_display }}
                             {% if task.description %}<p>{{ task.description }}</p>{% endif %}
+                            <form method="post" action="{% url 'chores:complete-task' task.pk %}">
+                                {% csrf_token %}
+                                <button type="submit">Marcar como completada</button>
+                            </form>
                         </li>
                     {% endfor %}
                 </ul>
@@ -43,6 +47,10 @@
                             — vence el {{ task.due_date|date:"d/m/Y" }}
                             — {{ task.get_recurrence_display }}
                             {% if task.description %}<p>{{ task.description }}</p>{% endif %}
+                            <form method="post" action="{% url 'chores:complete-task' task.pk %}">
+                                {% csrf_token %}
+                                <button type="submit">Marcar como completada</button>
+                            </form>
                         </li>
                     {% endfor %}
                 </ul>

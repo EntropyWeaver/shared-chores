@@ -6,7 +6,7 @@ Este repositorio forma parte del Module 1 de **AI Dev Tools Zoomcamp 2026**. El 
 
 ## Estado
 
-Especificación y backlog aprobados. Las Tasks 1–6 están completadas: los miembros pueden crear tareas y consultar un panel personal que prioriza sus pendientes vencidas y próximas sin filtrar datos de otros usuarios u hogares.
+Especificación y backlog aprobados. Las Tasks 1–7 están completadas: cada responsable puede consultar y completar sus tareas de forma segura, conservando quién realizó la acción y cuándo.
 
 ## Funcionalidades previstas
 
@@ -29,4 +29,4 @@ Especificación y backlog aprobados. Las Tasks 1–6 están completadas: los mie
 
 ## Próximo paso
 
-Implementar la Task 7 del backlog: completar tareas y conservar su resultado.
+Implementar la Task 8 del backlog: generar la siguiente ocurrencia semanal.
